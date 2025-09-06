@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
 	
 	// Window properties
 	window.set_default_size(250,200);
-	window.set_title("chePackage v0.9.0");
+	window.set_title("chPackage v0.9.0");
 	window.set_position(Gtk::WIN_POS_CENTER);
 	window.set_resizable(false);
 	popwindow.set_default_size(200,100);
