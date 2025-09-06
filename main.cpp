@@ -73,18 +73,30 @@ void ibuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* popla
 	std::string name = checkDistro();
 	system("> install_log.txt");
 	popwindow->resize(200,100); // Pkg names resize the window to fit content but don't resize it back
-	installPkg(name, text);
-	readErr(poplabel);
-	popwindow->show_all();
+	if (text == ""){
+		poplabel->set_text("No package name entered!");
+		popwindow->show_all();
+		return;
+	} else { 
+		installPkg(name, text);
+		readErr(poplabel);
+		popwindow->show_all();
+	}
 }
 void rbuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel){
 	std::string text = entry->get_text();
 	std::string name = checkDistro();
 	system("> install_log.txt");
 	popwindow->resize(200,100); // Pkg names resize the window to fit content but don't resize it back
-	removePkg(name, text);
-	readErr(poplabel);
-	popwindow->show_all();
+	if (text == ""){
+		poplabel->set_text("No package name entered!");
+		popwindow->show_all();
+		return;
+	} else { 
+		removePkg(name, text);
+		readErr(poplabel);
+		popwindow->show_all();
+	}
 }
 void installPkg(std::string name, std::string text){
 	std::string install;
