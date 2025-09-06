@@ -4,12 +4,14 @@
 #include <cstdlib>
 #include <fstream>
 #include <regex>
+const std::string v = "0.9.2"; // Current version
 void isRoot(); // We need root for installing packages
 std::string checkDistro(); // Use the correct package manager
 bool isFileEmpty(std::ifstream& file); // For readErr();
 void readErr(Gtk::Label* poplabel); // Get error from install_log.txt
 void removePkg(std::string name, std::string text); // Remove said packages
 void installPkg(std::string name, std::string text); // Install said packages
+void abuttonClicked(Gtk::Window* aboutwindow); // For the about button
 void rbuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel); // For the remove button
 void ibuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel); // For the install button
 int main(int argc, char* argv[]){
@@ -18,28 +20,36 @@ int main(int argc, char* argv[]){
 	// Init GUI
 	Gtk::Window window;
 	Gtk::Window popwindow;
+	Gtk::Window aboutwindow;
 	Gtk::Box vbox(Gtk::ORIENTATION_VERTICAL, 10);
 	Gtk::Entry entry;
 	Gtk::Button ibutton("Install!");
 	Gtk::Button rbutton("Remove!");
+	Gtk::Button abutton("About!");
 	Gtk::Label label("Input your packages here!");
 	Gtk::Label poplabel("");
-	poplabel.set_halign(Gtk::ALIGN_CENTER);
+	Gtk::Label aboutlabel("		🧀 chPackage version " + v + " 🧀\nhttps://github.com/ndrewCheese/chPackage");
 	
 	// Window properties
 	window.set_default_size(250,200);
-	window.set_title("chPackage v0.9.0");
+	window.set_title("chPackage 🧀");
 	window.set_position(Gtk::WIN_POS_CENTER);
 	window.set_resizable(false);
-	popwindow.set_default_size(200,100);
+	popwindow.set_default_size(100,100);
 	popwindow.set_title("Package status");
 	popwindow.set_position(Gtk::WIN_POS_CENTER);
 	popwindow.set_resizable(false);
+	aboutwindow.set_default_size(300,50);
+	aboutwindow.set_title("About chPackage");
+	aboutwindow.set_position(Gtk::WIN_POS_CENTER);
+	aboutwindow.set_resizable(false);
 	
-	// Heading
+	// Label handling
     label.set_halign(Gtk::ALIGN_CENTER);
     label.set_margin_top(15);
     vbox.pack_start(label, Gtk::PACK_SHRINK);
+    poplabel.set_halign(Gtk::ALIGN_CENTER);
+    
     
     // Entry field
 	entry.set_placeholder_text("Enter package name...");
@@ -54,16 +64,23 @@ int main(int argc, char* argv[]){
 	rbutton.signal_clicked().connect(
 		sigc::bind(sigc::ptr_fun(&rbuttonClicked), &entry, &popwindow, &poplabel)
 	);
+	abutton.signal_clicked().connect(
+		sigc::bind(sigc::ptr_fun(&abuttonClicked), &aboutwindow)
+	);
 	ibutton.set_size_request(150, 50);
 	ibutton.set_halign(Gtk::ALIGN_CENTER);
 	rbutton.set_size_request(150, 50);
 	rbutton.set_halign(Gtk::ALIGN_CENTER);
+	abutton.set_size_request(150, 20);
+	abutton.set_halign(Gtk::ALIGN_CENTER);
 	vbox.pack_start(ibutton, Gtk::PACK_SHRINK);
 	vbox.pack_start(rbutton, Gtk::PACK_SHRINK);
+	vbox.pack_start(abutton, Gtk::PACK_SHRINK);
 	
 	// Wrap it up nicely
 	window.add(vbox);
 	popwindow.add(poplabel);
+	aboutwindow.add(aboutlabel);
 	vbox.show_all();
 	Gtk::Main::run(window);
 	return 0;
@@ -73,7 +90,7 @@ void ibuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* popla
 	std::string name = checkDistro();
 	system("> install_log.txt");
 	popwindow->resize(200,100); // Pkg names resize the window to fit content but don't resize it back
-	if (text == ""){
+	if (std::all_of(text.begin(), text.end(), ::isspace)){
 		poplabel->set_text("No package name entered!");
 		popwindow->show_all();
 		return;
@@ -88,7 +105,7 @@ void rbuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* popla
 	std::string name = checkDistro();
 	system("> install_log.txt");
 	popwindow->resize(200,100); // Pkg names resize the window to fit content but don't resize it back
-	if (text == ""){
+	if (std::all_of(text.begin(), text.end(), ::isspace)){
 		poplabel->set_text("No package name entered!");
 		popwindow->show_all();
 		return;
@@ -97,6 +114,9 @@ void rbuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* popla
 		readErr(poplabel);
 		popwindow->show_all();
 	}
+}
+void abuttonClicked(Gtk::Window* aboutwindow){
+	aboutwindow->show_all();
 }
 void installPkg(std::string name, std::string text){
 	std::string install;

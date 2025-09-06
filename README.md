@@ -4,7 +4,7 @@
 Make sure you have g++ and gtkmm-3.0 (libgtkmm-3.0-dev for debian-based) installed.
 ```cpp
 git clone https://github.com/ndrewCheese/chPackage
-chmod +x install.sh
+cd chPackage/
 ./install.sh
 ./chPkg
 ```
