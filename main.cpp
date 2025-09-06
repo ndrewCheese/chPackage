@@ -1,5 +1,3 @@
-/* Package installer 
- * unknownversion 2025 */
 #include <gtkmm.h>
 #include <iostream>
 #include <unistd.h>
@@ -8,26 +6,29 @@
 #include <regex>
 void isRoot(); // We need root for installing packages
 std::string checkDistro(); // Use the correct package manager
-bool isFileEmpty(const std::string& filename); // For readErr();
+bool isFileEmpty(std::ifstream& file); // For readErr();
 void readErr(Gtk::Label* poplabel); // Get error from install_log.txt
+void removePkg(std::string name, std::string text); // Remove said packages
 void installPkg(std::string name, std::string text); // Install said packages
-void buttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel); // For the install button
+void rbuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel); // For the remove button
+void ibuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel); // For the install button
 int main(int argc, char* argv[]){
 	isRoot();
 	Gtk::Main kit(argc, argv);
 	// Init GUI
 	Gtk::Window window;
 	Gtk::Window popwindow;
-	Gtk::Box vbox(Gtk::ORIENTATION_VERTICAL, 10); // For the junk
+	Gtk::Box vbox(Gtk::ORIENTATION_VERTICAL, 10);
 	Gtk::Entry entry;
-	Gtk::Button button("Install!");
-	Gtk::Label label("Install your packages here!");
-	Gtk::Label poplabel("Your package was being processed :-)");
+	Gtk::Button ibutton("Install!");
+	Gtk::Button rbutton("Remove!");
+	Gtk::Label label("Input your packages here!");
+	Gtk::Label poplabel("");
 	poplabel.set_halign(Gtk::ALIGN_CENTER);
 	
 	// Window properties
-	window.set_default_size(250,140);
-	window.set_title("chePackage");
+	window.set_default_size(250,200);
+	window.set_title("chePackage v0.9.0");
 	window.set_position(Gtk::WIN_POS_CENTER);
 	window.set_resizable(false);
 	popwindow.set_default_size(200,100);
@@ -47,12 +48,18 @@ int main(int argc, char* argv[]){
 	vbox.pack_start(entry, Gtk::PACK_SHRINK);
     
 	// Button event & stuff
-	button.signal_clicked().connect(
-		sigc::bind(sigc::ptr_fun(&buttonClicked), &entry, &popwindow, &poplabel)
+	ibutton.signal_clicked().connect(
+		sigc::bind(sigc::ptr_fun(&ibuttonClicked), &entry, &popwindow, &poplabel)
 	);
-	button.set_size_request(150, 50);
-	button.set_halign(Gtk::ALIGN_CENTER);
-	vbox.pack_start(button, Gtk::PACK_SHRINK);
+	rbutton.signal_clicked().connect(
+		sigc::bind(sigc::ptr_fun(&rbuttonClicked), &entry, &popwindow, &poplabel)
+	);
+	ibutton.set_size_request(150, 50);
+	ibutton.set_halign(Gtk::ALIGN_CENTER);
+	rbutton.set_size_request(150, 50);
+	rbutton.set_halign(Gtk::ALIGN_CENTER);
+	vbox.pack_start(ibutton, Gtk::PACK_SHRINK);
+	vbox.pack_start(rbutton, Gtk::PACK_SHRINK);
 	
 	// Wrap it up nicely
 	window.add(vbox);
@@ -61,32 +68,24 @@ int main(int argc, char* argv[]){
 	Gtk::Main::run(window);
 	return 0;
 }
-
-void buttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel){ 
+void ibuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel){ 
 	std::string text = entry->get_text();
-	static std::string name = checkDistro();
+	std::string name = checkDistro();
 	system("> install_log.txt");
 	popwindow->resize(200,100); // Pkg names resize the window to fit content but don't resize it back
 	installPkg(name, text);
 	readErr(poplabel);
 	popwindow->show_all();
 }
-std::string checkDistro(){
-	std::ifstream stream("/etc/os-release");
-    std::string line;
-    std::regex nameRegex("^NAME=\"(.*?)\"$");
-    std::smatch match;
-    std::string name;
-    while (std::getline(stream, line)) {
-        if (std::regex_search(line, match, nameRegex)) {
-            name = match[1].str();
-            break;
-        }
-    }
-    std::cout << name << std::endl;
-	return name;
+void rbuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel){
+	std::string text = entry->get_text();
+	std::string name = checkDistro();
+	system("> install_log.txt");
+	popwindow->resize(200,100); // Pkg names resize the window to fit content but don't resize it back
+	removePkg(name, text);
+	readErr(poplabel);
+	popwindow->show_all();
 }
-
 void installPkg(std::string name, std::string text){
 	std::string install;
 	if (name == "Debian" || name == "Ubuntu" || name == "Linux Mint"){
@@ -102,6 +101,22 @@ void installPkg(std::string name, std::string text){
 	install += " 2> install_log.txt";
 	std::cout << install << std::endl;
 	system(install.c_str());
+}
+void removePkg(std::string name, std::string text){
+	std::string remove;
+	if (name == "Debian" || name == "Ubuntu" || name == "Linux Mint"){
+		remove = "sudo apt-get remove -y " + text;
+	}
+	else if (name == "Arch Linux" || name == "CachyOS" || name == "endeavourOS"){
+		remove = "sudo pacman -R --noconfirm " + text;
+	}
+	else {
+		std::cout << "Unsupported Linux distribution." << std::endl;
+		exit(1);
+	}
+	remove += " 2> install_log.txt";
+	std::cout << remove << std::endl;
+	system(remove.c_str());
 }
 bool isFileEmpty(std::ifstream& file) {
     return file.peek() == std::ifstream::traits_type::eof();
@@ -119,7 +134,21 @@ void readErr(Gtk::Label* poplabel){
 		getline(f, s);
 		poplabel->set_text(s);
 	}
-
+}
+std::string checkDistro(){
+	std::ifstream stream("/etc/os-release");
+    std::string line;
+    std::regex nameRegex("^NAME=\"(.*?)\"$");
+    std::smatch match;
+    std::string name;
+    while (std::getline(stream, line)) {
+        if (std::regex_search(line, match, nameRegex)) {
+            name = match[1].str();
+            break;
+        }
+    }
+    std::cout << name << std::endl;
+	return name;
 }
 void isRoot(){
 	if (getuid()){
@@ -127,4 +156,3 @@ void isRoot(){
 		 exit(1);
 	}
 }
-
