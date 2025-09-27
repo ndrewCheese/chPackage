@@ -1,23 +1,15 @@
+#include "installUtils.h"
 #include <gtkmm.h>
 #include <iostream>
 #include <unistd.h>
 #include <cstdlib>
 #include <fstream>
 #include <regex>
-const std::string v = "0.9.2"; // Current version
-void isRoot(); // We need root for installing packages
-std::string checkDistro(); // Use the correct package manager
-bool isFileEmpty(std::ifstream& file); // For readErr();
-void readErr(Gtk::Label* poplabel); // Get error from install_log.txt
-void removePkg(std::string name, std::string text); // Remove said packages
-void installPkg(std::string name, std::string text); // Install said packages
-void abuttonClicked(Gtk::Window* aboutwindow); // For the about button
-void rbuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel); // For the remove button
-void ibuttonClicked(Gtk::Entry* entry, Gtk::Window* popwindow, Gtk::Label* poplabel); // For the install button
+const std::string v = "0.9.3"; // Current version
 int main(int argc, char* argv[]){
 	isRoot();
 	Gtk::Main kit(argc, argv);
-	// Init GUI
+	// Init GUI elements
 	Gtk::Window window;
 	Gtk::Window popwindow;
 	Gtk::Window aboutwindow;
@@ -51,13 +43,13 @@ int main(int argc, char* argv[]){
     poplabel.set_halign(Gtk::ALIGN_CENTER);
     
     
-    // Entry field
+    // Entry fields
 	entry.set_placeholder_text("Enter package name...");
 	entry.set_size_request(200, -1);
 	entry.set_halign(Gtk::ALIGN_CENTER);
 	vbox.pack_start(entry, Gtk::PACK_SHRINK);
     
-	// Button event & stuff
+	// Buttons
 	ibutton.signal_clicked().connect(
 		sigc::bind(sigc::ptr_fun(&ibuttonClicked), &entry, &popwindow, &poplabel)
 	);
@@ -77,7 +69,7 @@ int main(int argc, char* argv[]){
 	vbox.pack_start(rbutton, Gtk::PACK_SHRINK);
 	vbox.pack_start(abutton, Gtk::PACK_SHRINK);
 	
-	// Wrap it up nicely
+	// Pack everything into windows & show em
 	window.add(vbox);
 	popwindow.add(poplabel);
 	aboutwindow.add(aboutlabel);
@@ -179,7 +171,6 @@ std::string checkDistro(){
             break;
         }
     }
-    std::cout << name << std::endl;
 	return name;
 }
 void isRoot(){
